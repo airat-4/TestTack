@@ -56,7 +56,7 @@ public class HSQLDBDAO implements DAO{
     public List<Group> getAllGroupsWithStudents() throws DAOException {
         LinkedList<Group> groups = new LinkedList<Group>();
         try {
-            ResultSet resultSet = statement.executeQuery("select * from group");
+            ResultSet resultSet = statement.executeQuery("select * from learn_group");
             while(resultSet.next()){
                 Group group = new Group(resultSet.getString("dept_name"), resultSet.getInt("group_number"));
                 group.setId(resultSet.getLong("id"));
@@ -81,10 +81,10 @@ public class HSQLDBDAO implements DAO{
     public void updateStudent(Student student) throws DAOException {
         try {
             statement.execute("update student set "
-                                + " name = " + student.getName()
-                                + ", last_name = " + student.getLastName()
-                                + ", patronymic = " + student.getPatronymic()
-                                + ", born_date = to_date('" + student.getBornDate() +"', 'DD/MM/YYYY')"
+                                + " name = '" + student.getName()
+                                + "', last_name = '" + student.getLastName()
+                                + "', patronymic = '" + student.getPatronymic()
+                                + "', born_date = to_date('" + student.getBornDate() +"', 'DD/MM/YYYY')"
                                 + ", group_id = " + student.getGroupID()
                                 + " where id = " +student.getId());
         } catch (SQLException e) {
@@ -94,9 +94,9 @@ public class HSQLDBDAO implements DAO{
 
     public void updateGroup(Group group) throws DAOException {
         try {
-            statement.execute("update group set "
-                    + " dept_name = " + group.getDepartmentName()
-                    + ", group_number = " + group.getGroupNumber()
+            statement.execute("update learn_group set "
+                    + " dept_name = '" + group.getDepartmentName()
+                    + "', group_number = " + group.getGroupNumber()
                     + " where id = " + group.getId());
         } catch (SQLException e) {
             throw new DAOException(e.getMessage());
@@ -106,8 +106,8 @@ public class HSQLDBDAO implements DAO{
     public synchronized void addStudent(Student student) throws DAOException {
         try {
             statement.execute("insert into student (id, name, last_name, patronymic, born_date, group_id) values " +
-                    "(" + ++maxStudentID + "," + student.getName() + "," + student.getLastName() + "," + student.getPatronymic()
-                    + ", to_date('" + student.getBornDate() +"', 'DD/MM/YYYY')" + "," + student.getGroupID() + ")");
+                    "(" + ++maxStudentID + ",'" + student.getName() + "','" + student.getLastName() + "','" + student.getPatronymic()
+                    + "', to_date('" + student.getBornDate() +"', 'DD/MM/YYYY')" + "," + student.getGroupID() + ")");
             student.setId(maxStudentID);
         } catch (SQLException e) {
             throw new DAOException(e.getMessage());
@@ -116,8 +116,8 @@ public class HSQLDBDAO implements DAO{
 
     public synchronized void addGroup(Group group) throws DAOException {
         try {
-            statement.execute("insert into group (id, group_number, dept_name) values("+
-                    + ++maxGroupID + ", " + group.getGroupNumber() + ", " + group.getDepartmentName() + ")");
+            statement.execute("insert into learn_group (id, group_number, dept_name) values("+
+                    + ++maxGroupID + ", " + group.getGroupNumber() + ", '" + group.getDepartmentName() + "')");
             group.setId(maxGroupID);
         } catch (SQLException e) {
             throw new DAOException(e.getMessage());
@@ -134,7 +134,7 @@ public class HSQLDBDAO implements DAO{
 
     public void removeGroup(Group group) throws DAOException {
         try {
-            statement.execute("delete from group where id = " + group.getId());
+            statement.execute("delete from learn_group where id = " + group.getId());
         } catch (SQLException e) {
             throw new DAOException(e.getMessage());
         }

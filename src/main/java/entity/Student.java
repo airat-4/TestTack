@@ -2,7 +2,9 @@ package entity;
 
 import dao.DAO;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.GregorianCalendar;
 
 /**
  * Created by airat on 26.04.16.
@@ -12,14 +14,22 @@ public class Student {
     private String name;
     private String lastName;
     private String patronymic;
-    private Date bornDate;
+    private String bornDate;
     private long groupID;
+
+    public Student(String name, String lastName, String patronymic, String bornDate) {
+        this.name = name;
+        this.lastName = lastName;
+        this.patronymic = patronymic;
+        this.bornDate = bornDate;
+    }
 
     public Student(String name, String lastName, String patronymic, Date bornDate) {
         this.name = name;
         this.lastName = lastName;
         this.patronymic = patronymic;
-        this.bornDate = bornDate;
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/YYYY");
+        this.bornDate = simpleDateFormat.format(bornDate);
     }
 
     public long getId() {
@@ -55,16 +65,11 @@ public class Student {
     }
 
     public String getBornDate() {
-        return "" + bornDate.getDay() + "/" + (bornDate.getMonth() + 1) + "/" + (bornDate.getYear() + 1900);
+        return bornDate;
     }
 
     public void setBornDate(String bornDate) {
-        String[] split = bornDate.split("/");
-        int year = Integer.parseInt(split[2]) - 1900;
-        int month = Integer.parseInt(split[1]) - 1;
-        int day = Integer.parseInt(split[0]);
-        Date date = new Date(year, month, day);
-        this.bornDate = date;
+        this.bornDate = bornDate;
     }
 
     public long getGroupID() {

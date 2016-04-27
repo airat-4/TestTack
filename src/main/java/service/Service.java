@@ -25,12 +25,14 @@ public class Service {
         }
     }
 
-    public synchronized static Service getInstance(){
+    public  static Service getInstance(){
         if(service == null)
-            try {
-                service = new Service();
-            } catch (DAOException e) {
-                e.printStackTrace();
+            synchronized (Service.class) {
+                try {
+                    service = new Service();
+                } catch (DAOException e) {
+                    e.printStackTrace();
+                }
             }
 
         return service;
@@ -88,7 +90,7 @@ public class Service {
         }
     }
 
-    public long addStudent(String name, String lastName, String patronymic, Date bornDate, long groupID){
+    public long addStudent(String name, String lastName, String patronymic, String bornDate, long groupID){
         Group group = allGroups.get(groupID);
         if(group == null || name == null || lastName == null || patronymic == null || bornDate == null
                 || name.trim().equals("") || lastName.trim().equals("") || patronymic.trim().equals(""))
@@ -157,9 +159,7 @@ public class Service {
         }
     }
 
-    public static void main(String[] args) throws DAOException {
-        Service service = new Service();
-    }
+
 
 
 
