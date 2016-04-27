@@ -2,6 +2,7 @@ package service;
 
 import dao.DAO;
 import dao.DAOException;
+import dao.HSQLDBDAO;
 import entity.Group;
 import entity.Student;
 
@@ -17,7 +18,7 @@ public class Service {
     private HashMap<Long, Group> allGroups = new HashMap<Long, Group>();
 
     private Service() throws DAOException {
-        // TODO dao =
+        dao = new HSQLDBDAO();
         List<Group> allGroupsWithStudents = dao.getAllGroupsWithStudents();
         for (Group currentGroup : allGroupsWithStudents) {
             allGroups.put(currentGroup.getId(), currentGroup);
@@ -154,6 +155,10 @@ public class Service {
             e.printStackTrace();
             return false;
         }
+    }
+
+    public static void main(String[] args) throws DAOException {
+        Service service = new Service();
     }
 
 

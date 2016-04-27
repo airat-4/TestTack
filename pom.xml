@@ -7,6 +7,14 @@
     <groupId>com.haulmont</groupId>
     <artifactId>test-task</artifactId>
     <version>1.0</version>
+    <dependencies>
+        <dependency>
+            <groupId>org.hsqldb</groupId>
+            <artifactId>hsqldb</artifactId>
+            <version>2.3.3</version>
+        </dependency>
+    </dependencies>
+
 
 
 </project>
