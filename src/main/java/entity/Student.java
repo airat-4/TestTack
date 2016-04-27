@@ -54,12 +54,17 @@ public class Student {
         this.patronymic = patronymic;
     }
 
-    public Date getBornDate() {
-        return bornDate;
+    public String getBornDate() {
+        return "" + bornDate.getDay() + "/" + (bornDate.getMonth() + 1) + "/" + (bornDate.getYear() + 1900);
     }
 
-    public void setBornDate(Date bornDate) {
-        this.bornDate = bornDate;
+    public void setBornDate(String bornDate) {
+        String[] split = bornDate.split("/");
+        int year = Integer.parseInt(split[2]) - 1900;
+        int month = Integer.parseInt(split[1]) - 1;
+        int day = Integer.parseInt(split[0]);
+        Date date = new Date(year, month, day);
+        this.bornDate = date;
     }
 
     public long getGroupID() {

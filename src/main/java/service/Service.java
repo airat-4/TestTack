@@ -105,7 +105,7 @@ public class Service {
         }
     }
 
-    public boolean updateStudent(long studentID, String name, String lastName, String patronymic, Date bornDate, long oldGroupID, long newGroupID){
+    public boolean updateStudent(long studentID, String name, String lastName, String patronymic, String bornDate, long oldGroupID, long newGroupID){
         Group oldGroup = allGroups.get(oldGroupID);
         Group newGroup = allGroups.get(newGroupID);
 
@@ -118,7 +118,7 @@ public class Service {
         String oldName = student.getName();
         String oldLastName = student.getLastName();
         String oldPatronymic = student.getPatronymic();
-        Date oldBornDate = student.getBornDate();
+        String oldBornDate = student.getBornDate();
         student.setName(name);
         student.setLastName(lastName);
         student.setPatronymic(patronymic);
