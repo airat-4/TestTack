@@ -62,4 +62,9 @@ public class Group {
     public ArrayList<Student> getStudents() {
         return students;
     }
+
+    @Override
+    public String toString() {
+        return getDepartmentName() + " " + getGroupNumber() + "гр.";
+    }
 }

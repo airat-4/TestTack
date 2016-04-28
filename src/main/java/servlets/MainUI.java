@@ -1,12 +1,12 @@
 package servlets;
 
 import com.vaadin.annotations.Theme;
-import com.vaadin.server.ServiceException;
-import com.vaadin.server.SessionExpiredException;
+import com.vaadin.data.Item;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.ui.*;
 import com.vaadin.ui.themes.ValoTheme;
 import entity.Group;
+import entity.Student;
 import service.Service;
 
 @Theme(ValoTheme.THEME_NAME)
@@ -21,7 +21,7 @@ public class MainUI extends UI {
         groupLayout.setMargin(true);
         studentLayout.setMargin(true);
         addGroups(groupLayout, request);
-        addGStudents(studentLayout);
+        addStudents(studentLayout);
         horizontalLayout.addComponent(groupLayout);
         horizontalLayout.addComponent(studentLayout);
         setContent(horizontalLayout);
@@ -34,14 +34,173 @@ public class MainUI extends UI {
         VerticalLayout layout = new VerticalLayout();
         layout.setMargin(true);
         layout.addComponent(new Label("Ой что то пошло не так :("));
+        layout.addComponent(new Label(" "));
+        layout.addComponent(new Label("Возможные проблемы:"));
+        layout.addComponent(new Label("    - Вы пытаетесь ввести некорректные данные"));
+        layout.addComponent(new Label("    - Вы пытаетесь удалить или редактировать не выбрав объект"));
+        layout.addComponent(new Label("    - Вы пытаетесь удалить группу в которой есть студенты"));
+        layout.addComponent(new Label("    - Что то не так с базой данных"));
         errorWindow.setContent(layout);
     }
 
-    private void addGStudents(Layout studentLayout) {
+    private void addStudents(Layout studentLayout) {
+        final Table table = new Table("Студенты");
+        table.addContainerProperty("Фамилия", String.class, null);
+        table.addContainerProperty("Имя", String.class, null);
+        table.addContainerProperty("Отчество", String.class, null);
+        table.addContainerProperty("Дата рождения", String.class, null);
+        for (Group group : Service.getInstance().getAllGroupsWithStudent()) {
+            for (Student student : group.getStudents()) {
+                table.addItem(new Object[]{student.getLastName(), student.getName(), student.getPatronymic(),
+                student.getBornDate()},"" + group.getId() + " " + student.getId());
+            }
+        }
+        table.setPageLength(10);
+        table.setSelectable(true);
+        studentLayout.addComponent(table);
+        Button addButton = new Button("Добавить");
+        Button updateButton = new Button("Изменить");
+        Button deleteButton = new Button("Удалить");
+        HorizontalLayout horizontalLayout = new HorizontalLayout();
+        horizontalLayout.addComponent(addButton);
+        horizontalLayout.addComponent(updateButton);
+        horizontalLayout.addComponent(deleteButton);
+        studentLayout.addComponent(horizontalLayout);
+        final Window window = new Window();
+
+
+        deleteButton.addClickListener(new Button.ClickListener() {
+            public void buttonClick(Button.ClickEvent clickEvent) {
+                try {
+                    String id = (String) table.getValue();
+                    String[] arr = id.split(" ");
+                    long groupID = Long.parseLong(arr[0]);
+                    long studentID = Long.parseLong(arr[1]);
+                    if (Service.getInstance().removeStudent(groupID,studentID)) {
+                        table.removeItem(id);
+                    } else {
+                        addWindow(errorWindow);
+                    }
+                } catch (NullPointerException e) {
+                    addWindow(errorWindow);
+                }
+
+            }
+        });
+
+        VerticalLayout verticalLayout = new VerticalLayout();
+         horizontalLayout = new HorizontalLayout();
+        verticalLayout.setMargin(true);
+        final TextField nameTextField = new TextField();
+        final TextField lastNameTextField = new TextField();
+        final TextField patronymicTextField = new TextField();
+        final TextField bornDateTextField = new TextField();
+        final ComboBox comboBox = new ComboBox();
+        verticalLayout.addComponent(new Label("Фамилия:"));
+        verticalLayout.addComponent(lastNameTextField);
+        verticalLayout.addComponent(new Label("Имя:"));
+        verticalLayout.addComponent(nameTextField);
+        verticalLayout.addComponent(new Label("Отчество:"));
+        verticalLayout.addComponent(patronymicTextField);
+        verticalLayout.addComponent(new Label("Дата рождения(дд/мм/гггг):"));
+        verticalLayout.addComponent(bornDateTextField);
+        verticalLayout.addComponent(new Label("Группа:"));
+        verticalLayout.addComponent(comboBox);
+        Button okButton = new Button("OK");
+        Button cancelButton = new Button("Отмена");
+        horizontalLayout.addComponent(okButton);
+        horizontalLayout.addComponent(cancelButton);
+        verticalLayout.addComponent(horizontalLayout);
+        window.setContent(verticalLayout);
+        window.setModal(true);
+        window.center();
+        addButton.addClickListener(new Button.ClickListener() {
+            public void buttonClick(Button.ClickEvent clickEvent) {
+                window.setCaption("Добавление студента");
+                initComboBox(comboBox);
+                addWindow(window);
+            }
+        });
+        updateButton.addClickListener(new Button.ClickListener() {
+            public void buttonClick(Button.ClickEvent clickEvent) {
+                try {
+                    initComboBox(comboBox);
+                    window.setCaption("Редактирование студента");
+                    String id = (String) table.getValue();
+                    String[] arr = id.split(" ");
+                    long groupID = Long.parseLong(arr[0]);
+                    Item item = table.getItem(id);
+                    nameTextField.setValue((String) item.getItemProperty("Имя").getValue());
+                    lastNameTextField.setValue((String)item.getItemProperty("Фамилия").getValue());
+                    patronymicTextField.setValue((String)item.getItemProperty("Отчество").getValue());
+                    bornDateTextField.setValue((String)item.getItemProperty("Дата рождения").getValue());
+                    comboBox.setValue(Service.getInstance().getGroupByID(groupID));
+
+                    addWindow(window);
+                } catch (NullPointerException e) {
+                    addWindow(errorWindow);
+                }
+
+            }
+        });
+        cancelButton.addClickListener(new Button.ClickListener() {
+            public void buttonClick(Button.ClickEvent clickEvent) {
+                window.close();
+                nameTextField.clear();
+                lastNameTextField.clear();
+                patronymicTextField.clear();
+                bornDateTextField.clear();
+                comboBox.clear();
+            }
+        });
+
+        okButton.addClickListener(new Button.ClickListener() {
+            public void buttonClick(Button.ClickEvent clickEvent) {
+                String name = nameTextField.getValue();
+                String lastName = lastNameTextField.getValue();
+                String patronymic = patronymicTextField.getValue();
+                String bornDate = bornDateTextField.getValue();
+                long groupID = ((Group) comboBox.getValue()).getId();
+                nameTextField.clear();
+                lastNameTextField.clear();
+                patronymicTextField.clear();
+                bornDateTextField.clear();
+                comboBox.clear();
+                if("Добавление студента".equals(window.getCaption())) {
+                    long id = Service.getInstance().addStudent(name, lastName, patronymic, bornDate, groupID);
+                    window.close();
+                    if (id == -1) {
+                        addWindow(errorWindow);
+                    } else {
+                        table.addItem(new Object[]{lastName, name, patronymic, bornDate}, groupID + " " + id);
+                    }
+                }else{
+                    String id = (String)table.getValue();
+                    String[] arr = id.split(" ");
+                    long oldGroupID = Long.parseLong(arr[0]);
+                    long studentID = Long.parseLong(arr[1]);
+                    window.close();
+                    if (Service.getInstance().updateStudent(studentID, name, lastName, patronymic, bornDate, oldGroupID, groupID )) {
+                        table.removeItem(id);
+                        table.addItem(new Object[]{lastName, name, patronymic, bornDate}, groupID + " " + studentID);
+                    } else {
+                        addWindow(errorWindow);
+                    }
+                }
+            }
+        });
+
+    }
+
+    private void initComboBox(ComboBox comboBox){
+        comboBox.removeAllItems();
+        for (Group group : Service.getInstance().getAllGroupsWithStudent()) {
+            comboBox.addItem(group);
+        }
     }
 
     private void addGroups(Layout groupLayout, final VaadinRequest request) {
-        Table table = new Table("Группы");
+        final Table table = new Table("Группы");
         table.addContainerProperty("Название факультета", String.class, null);
         table.addContainerProperty("Номер группы", Integer.class, null);
         for (Group group : Service.getInstance().getAllGroupsWithStudent()) {
@@ -59,23 +218,32 @@ public class MainUI extends UI {
         horizontalLayout.addComponent(deleteButton);
         groupLayout.addComponent(horizontalLayout);
         final Window window = new Window();
-        initGroupWindow(window, table);
+        initGroupWindow(window, table, updateButton);
 
         addButton.addClickListener(new Button.ClickListener() {
             public void buttonClick(Button.ClickEvent clickEvent) {
-                window.setCaption("Добавить группу");
+                window.setCaption("Добавление группы");
                 addWindow(window);
             }
         });
-        updateButton.addClickListener(new Button.ClickListener() {
+        deleteButton.addClickListener(new Button.ClickListener() {
             public void buttonClick(Button.ClickEvent clickEvent) {
-                window.setCaption("Редактировать группу");
-                addWindow(window);
+                try{
+                    long id = (Long)table.getValue();
+                    if(Service.getInstance().removeGroup(id)){
+                        table.removeItem(id);
+                    }else{
+                        addWindow(errorWindow);
+                    }
+                }catch (NullPointerException e){
+                    addWindow(errorWindow);
+                }
+
             }
         });
     }
 
-    private void initGroupWindow(final Window window, final  Table table) {
+    private void initGroupWindow(final Window window, final Table table, Button updateButton) {
         VerticalLayout verticalLayout = new VerticalLayout();
         HorizontalLayout horizontalLayout = new HorizontalLayout();
         verticalLayout.setMargin(true);
@@ -93,9 +261,28 @@ public class MainUI extends UI {
         window.setContent(verticalLayout);
         window.setModal(true);
         window.center();
+
+        updateButton.addClickListener(new Button.ClickListener() {
+            public void buttonClick(Button.ClickEvent clickEvent) {
+                try {
+                    window.setCaption("Редактирование группы");
+
+                    long id = (Long) table.getValue();
+                    Item item = table.getItem(id);
+                    departmentTextField.setValue((String) item.getItemProperty("Название факультета").getValue());
+                    groupNumberTextField.setValue(String.valueOf(item.getItemProperty("Номер группы").getValue()));
+                    addWindow(window);
+                } catch (NullPointerException e) {
+                    addWindow(errorWindow);
+                }
+
+            }
+        });
         cancelButton.addClickListener(new Button.ClickListener() {
             public void buttonClick(Button.ClickEvent clickEvent) {
                 window.close();
+                departmentTextField.clear();
+                groupNumberTextField.clear();
             }
         });
 
@@ -105,7 +292,7 @@ public class MainUI extends UI {
                 int groupNumber = Integer.parseInt(groupNumberTextField.getValue());
                 departmentTextField.clear();
                 groupNumberTextField.clear();
-                if("Добавить группу".equals(window.getCaption())) {
+                if("Добавление группы".equals(window.getCaption())) {
                     long id = Service.getInstance().addGroup(department, groupNumber);
                     window.close();
                     if (id == -1) {

@@ -42,6 +42,10 @@ public class Service {
         return allGroups.values();
     }
 
+    public Group getGroupByID(long id){
+        return allGroups.get(id);
+    }
+
     public long addGroup(String departmentName, int groupNumber){
         if(departmentName == null || departmentName.trim().equals("") || groupNumber <= 0)
             return -1;
