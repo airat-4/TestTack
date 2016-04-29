@@ -67,4 +67,25 @@ public class Group {
     public String toString() {
         return getDepartmentName() + " " + getGroupNumber() + "гр.";
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Group group = (Group) o;
+
+        if (id != group.id) return false;
+        if (groupNumber != group.groupNumber) return false;
+        return departmentName.equals(group.departmentName);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = (int) (id ^ (id >>> 32));
+        result = 31 * result + groupNumber;
+        result = 31 * result + departmentName.hashCode();
+        return result;
+    }
 }
