@@ -2,11 +2,15 @@ package servlets;
 
 import com.vaadin.annotations.Theme;
 import com.vaadin.data.Item;
+import com.vaadin.data.Property;
+import com.vaadin.event.FieldEvents;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.ui.*;
+import com.vaadin.ui.Table;
 import com.vaadin.ui.themes.ValoTheme;
 import entity.Group;
 import entity.Student;
+import org.hsqldb.*;
 import service.Service;
 
 @Theme(ValoTheme.THEME_NAME)
@@ -19,7 +23,7 @@ public class MainUI extends UI {
         VerticalLayout studentLayout = new VerticalLayout();
         HorizontalLayout horizontalLayout = new HorizontalLayout();
         groupLayout.setMargin(true);
-        studentLayout.setMargin(true);
+        horizontalLayout.setMargin(true);
         addGroups(groupLayout, request);
         addStudents(studentLayout);
         horizontalLayout.addComponent(groupLayout);
@@ -45,11 +49,17 @@ public class MainUI extends UI {
 
     private void addStudents(Layout studentLayout) {
         final Table table = new Table("Студенты");
+        table.setWidth("637px");
         table.addContainerProperty("Фамилия", String.class, null);
         table.addContainerProperty("Имя", String.class, null);
         table.addContainerProperty("Отчество", String.class, null);
         table.addContainerProperty("Дата рождения", String.class, null);
-        for (Group group : Service.getInstance().getAllGroupsWithStudent()) {
+        final Service service = Service.getInstance();
+        if(service == null) {
+            addWindow(errorWindow);
+            return;
+        }
+        for (Group group : service.getAllGroupsWithStudent()) {
             for (Student student : group.getStudents()) {
                 table.addItem(new Object[]{student.getLastName(), student.getName(), student.getPatronymic(),
                 student.getBornDate()},"" + group.getId() + " " + student.getId());
@@ -57,11 +67,35 @@ public class MainUI extends UI {
         }
         table.setPageLength(10);
         table.setSelectable(true);
+        HorizontalLayout horizontalLayout= new HorizontalLayout();
+        horizontalLayout.addComponent(new Label("Группа"));
+        final ComboBox filterComboBox = new ComboBox();
+        filterComboBox.addFocusListener(new FieldEvents.FocusListener() {
+            public void focus(FieldEvents.FocusEvent focusEvent) {
+                initComboBox(filterComboBox);
+            }
+        });
+
+        initComboBox(filterComboBox);
+        horizontalLayout.addComponent(filterComboBox);
+        horizontalLayout.addComponent(new Label("Фамилия"));
+        final TextField filterTextField = new TextField();
+        horizontalLayout.addComponent(filterTextField);
+        Button filterButton = new Button("Отфильтровать");
+        horizontalLayout.addComponent(filterButton);
+        filterButton.addClickListener(new Button.ClickListener() {
+            public void buttonClick(Button.ClickEvent clickEvent) {
+                filter(table, (Group) filterComboBox.getValue(), filterTextField.getValue());
+            }
+        });
+
+
+        studentLayout.addComponent(horizontalLayout);
         studentLayout.addComponent(table);
         Button addButton = new Button("Добавить");
         Button updateButton = new Button("Изменить");
         Button deleteButton = new Button("Удалить");
-        HorizontalLayout horizontalLayout = new HorizontalLayout();
+        horizontalLayout = new HorizontalLayout();
         horizontalLayout.addComponent(addButton);
         horizontalLayout.addComponent(updateButton);
         horizontalLayout.addComponent(deleteButton);
@@ -192,6 +226,26 @@ public class MainUI extends UI {
 
     }
 
+    private void filter(Table table, Group selectedGroup, String lastName){
+        if (selectedGroup == null) {
+            table.removeAllItems();
+            for (Group group : Service.getInstance().getAllGroupsWithStudent()) {
+                for (Student student : group.getStudents()) {
+                    if(student.getLastName().toLowerCase().startsWith(lastName.toLowerCase()))
+                        table.addItem(new Object[]{student.getLastName(), student.getName(), student.getPatronymic(),
+                            student.getBornDate()}, "" + group.getId() + " " + student.getId());
+                }
+            }
+        } else {
+            table.removeAllItems();
+            for (Student student : Service.getInstance().getGroupByID(selectedGroup.getId()).getStudents()) {
+                if(student.getLastName().toLowerCase().startsWith(lastName.toLowerCase()))
+                    table.addItem(new Object[]{student.getLastName(), student.getName(), student.getPatronymic(),
+                        student.getBornDate()}, "" + Service.getInstance().getGroupByID(selectedGroup.getId()).getId() + " " + student.getId());
+            }
+        }
+    }
+
     private void initComboBox(ComboBox comboBox){
         comboBox.removeAllItems();
         for (Group group : Service.getInstance().getAllGroupsWithStudent()) {
@@ -203,7 +257,12 @@ public class MainUI extends UI {
         final Table table = new Table("Группы");
         table.addContainerProperty("Название факультета", String.class, null);
         table.addContainerProperty("Номер группы", Integer.class, null);
-        for (Group group : Service.getInstance().getAllGroupsWithStudent()) {
+        table.setWidth("305px");
+        Service service = Service.getInstance();
+        if(service == null) {
+            return;
+        }
+        for (Group group : service.getAllGroupsWithStudent()) {
             table.addItem(new Object[]{group.getDepartmentName(), group.getGroupNumber()}, group.getId());
         }
         table.setPageLength(10);
