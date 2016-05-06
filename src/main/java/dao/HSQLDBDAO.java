@@ -34,22 +34,48 @@ public class HSQLDBDAO implements DAO{
             throw new DAOException("Неудадось подключится к БД. " + e.getMessage());
         }
         try {
-            statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery("select max(id) as max_id from learn_group");
-            if(resultSet.next()){
-                maxGroupID = resultSet.getLong("max_id");
-            }
-            resultSet.close();
-            resultSet = statement.executeQuery("select max(id) as max_id from student");
-            if(resultSet.next()){
-                maxStudentID = resultSet.getLong("max_id");
-            }
-            resultSet.close();
-
+            getMaxID();
         } catch (SQLException e) {
-            throw new DAOException(e.getMessage());
+            try {
+                createTables();
+                getMaxID();
+            } catch (SQLException e1) {
+                throw new DAOException(e1.getMessage());
+            }
+
         }
 
+    }
+
+    private void createTables() throws SQLException {
+        statement.execute("create table learn_group(\n" +
+                "    id bigint primary key,\n" +
+                "    group_number integer not null,\n" +
+                "    dept_name varchar(100) not null\n" +
+                ")");
+        statement.execute("create table student(\n" +
+                "    id bigint primary key,\n" +
+                "    name varchar(50) not null,\n" +
+                "    last_name varchar(50) not null,\n" +
+                "    patronymic varchar(50) not null,\n" +
+                "    born_date date not null,\n" +
+                "    group_id bigint,\n" +
+                "    foreign key (group_id) references learn_group(id)\n" +
+                ")");
+    }
+
+    private void getMaxID() throws SQLException {
+        statement = connection.createStatement();
+        ResultSet resultSet = statement.executeQuery("select max(id) as max_id from learn_group");
+        if(resultSet.next()){
+            maxGroupID = resultSet.getLong("max_id");
+        }
+        resultSet.close();
+        resultSet = statement.executeQuery("select max(id) as max_id from student");
+        if(resultSet.next()){
+            maxStudentID = resultSet.getLong("max_id");
+        }
+        resultSet.close();
     }
 
 
